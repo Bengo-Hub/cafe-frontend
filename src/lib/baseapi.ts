@@ -32,8 +32,12 @@ export interface BaseApiError {
 
 export function parseApiError(error: unknown): BaseApiError {
   if (axios.isAxiosError(error)) {
+    // Backend gating errors (subscription_inactive, service_not_subscribed, feature locks —
+    // shared/auth-client's writeFeatureError) use `error` as the message key, not `message`.
+    // Without this fallback every gating error here showed axios's generic
+    // "Request failed with status code 403" instead of the real backend message.
     const result: BaseApiError = {
-      message: error.response?.data?.message ?? error.message,
+      message: error.response?.data?.message ?? error.response?.data?.error ?? error.message,
       code: error.response?.data?.code ?? error.code,
       details: error.response?.data,
     };
